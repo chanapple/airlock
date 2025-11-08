@@ -3,11 +3,11 @@ name: Deploy to EC2
 on:
   push:
     branches:
-      - main  # main 브랜치에 푸시 시 자동 실행
+      - main
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest  # 어떤 OS에서 실행할지 설정
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
@@ -20,5 +20,10 @@ jobs:
 
       - name: Test EC2 connection
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_PUBLIC_IP }} \
-            "echo '✅ GitHub → EC2 연결 성공!' > ~/connection_test.txt"
+          echo "🔍 Testing connection to EC2..."
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+            echo "✅ GitHub → EC2 연결 성공!" > /home/ubuntu/connection_test.txt
+            echo "📂 현재 위치: $(pwd)" >> /home/ubuntu/connection_test.txt
+            echo "🕒 작성 시각: $(date)" >> /home/ubuntu/connection_test.txt
+            ls -al ~ >> /home/ubuntu/connection_test.txt
+          EOF
