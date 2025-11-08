@@ -16,9 +16,9 @@ jobs:
       - name: Setup SSH key
         uses: webfactory/ssh-agent@v0.5.3
         with:
-          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}  # GitHub Secrets에서 SSH 키를 불러옵니다
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-      - name: Deploy to EC2
+      - name: Test EC2 connection
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_PUBLIC_IP }} \
-            "cd /home/ubuntu/airlock && git pull && npm install && npm run build"
+            "echo '✅ GitHub → EC2 연결 성공!' > ~/connection_test.txt"
