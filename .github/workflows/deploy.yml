@@ -41,6 +41,7 @@ jobs:
         run: |
           echo "⚙️ Building backend..."
           cd backend
+          chmod +x gradlew
           ./gradlew clean build -x test
           cp build/libs/*.jar ../app.jar
           echo "✅ Backend build complete!"
