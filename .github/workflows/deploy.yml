@@ -9,59 +9,79 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # ✅ 1️⃣ 코드 체크아웃
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 1️⃣ 프론트엔드 빌드
+      # ✅ 2️⃣ 프론트엔드 빌드
       - name: Build frontend
         if: contains(github.event.head_commit.message, '[front]')
         run: |
+          echo "🧱 Building frontend..."
           cd frontend
           npm install
           npm run build
           tar -czf build.tar.gz build
           mv build.tar.gz ../build.tar.gz
+          echo "✅ Frontend build complete!"
 
-      # 2️⃣ 백엔드 빌드
-      - name: Build backend
+      # ✅ 3️⃣ 백엔드 빌드
+      - name: Setup Java for backend
         if: contains(github.event.head_commit.message, '[back]')
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
-      - if: contains(github.event.head_commit.message, '[back]')
+
+      - name: Build backend
+        if: contains(github.event.head_commit.message, '[back]')
         run: |
+          echo "⚙️ Building backend..."
           cd backend
           ./gradlew clean build -x test
           cp build/libs/*.jar ../app.jar
+          echo "✅ Backend build complete!"
 
-      # 3️⃣ EC2 배포
-      - name: Deploy to EC2
+      # ✅ 4️⃣ EC2로 파일 전송
+      - name: Upload files to EC2
         uses: appleboy/scp-action@master
         with:
-          host: ${{ secrets.EC2_IP }}
+          host: ${{ secrets.EC2_PUBLIC_IP }}   # 👈 이름 수정!
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "app.jar,build.tar.gz"
           target: "/home/ubuntu"
+          port: 22
 
-      # 4️⃣ EC2에서 서비스 적용
+      # ✅ 5️⃣ EC2 내에서 배포 명령 실행
       - name: Run deployment commands on EC2
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.EC2_IP }}
+          host: ${{ secrets.EC2_PUBLIC_IP }}   # 👈 동일하게 수정
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            echo "🚀 Starting deployment process on EC2..."
+
             if [[ "${GITHUB_HEAD_COMMIT_MESSAGE}" == *"[front]"* ]]; then
-              sudo rm -rf /var/www/html/*
-              tar -xzf build.tar.gz -C /var/www/html
-              echo "✅ Frontend updated!"
+              echo "🧩 Frontend update detected."
+              if [ -f "build.tar.gz" ]; then
+                sudo rm -rf /var/www/html/*
+                sudo tar -xzf build.tar.gz -C /var/www/html
+                echo "✅ Frontend updated successfully!"
+              else
+                echo "⚠️ build.tar.gz not found, skipping frontend deploy."
+              fi
             fi
 
             if [[ "${GITHUB_HEAD_COMMIT_MESSAGE}" == *"[back]"* ]]; then
-              sudo systemctl stop spring
-              mv app.jar /home/ubuntu/backend/app.jar
-              sudo systemctl start spring
-              echo "✅ Backend restarted!"
+              echo "🧩 Backend update detected."
+              if [ -f "app.jar" ]; then
+                sudo systemctl stop spring || true
+                mv app.jar /home/ubuntu/backend/app.jar
+                sudo systemctl start spring
+                echo "✅ Backend restarted successfully!"
+              else
+                echo "⚠️ app.jar not found, skipping backend deploy."
+              fi
             fi
