@@ -8,6 +8,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    env:
+      GITHUB_HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+
     steps:
       # ✅ 1️⃣ 코드 체크아웃
       - name: Checkout code
@@ -46,7 +49,7 @@ jobs:
       - name: Upload files to EC2
         uses: appleboy/scp-action@master
         with:
-          host: ${{ secrets.EC2_PUBLIC_IP }}   # 👈 이름 수정!
+          host: ${{ secrets.EC2_PUBLIC_IP }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "app.jar,build.tar.gz"
@@ -57,11 +60,13 @@ jobs:
       - name: Run deployment commands on EC2
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.EC2_PUBLIC_IP }}   # 👈 동일하게 수정
+          host: ${{ secrets.EC2_PUBLIC_IP }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: GITHUB_HEAD_COMMIT_MESSAGE
           script: |
             echo "🚀 Starting deployment process on EC2..."
+            echo "Commit message: ${GITHUB_HEAD_COMMIT_MESSAGE}"
 
             if [[ "${GITHUB_HEAD_COMMIT_MESSAGE}" == *"[front]"* ]]; then
               echo "🧩 Frontend update detected."
