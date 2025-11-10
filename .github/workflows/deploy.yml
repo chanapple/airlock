@@ -51,6 +51,7 @@ jobs:
           pwd
           echo "📁 상위 폴더 목록:"
           ls -al ..
+          mkdir -p ../
           cp build/libs/*.jar ../app.jar
           echo "✅ Backend build complete!"
 
