@@ -51,9 +51,9 @@ jobs:
           pwd
           echo "📁 상위 폴더 목록:"
           ls -al ..
-          mkdir -p ../
-          cp build/libs/*.jar ../app.jar
+          cp build/libs/*SNAPSHOT.jar ../app.jar
           echo "✅ Backend build complete!"
+
 
       # ✅ 5️⃣ EC2로 프론트엔드 빌드 파일 전송
       - name: Upload frontend build to EC2
