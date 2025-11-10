@@ -1,23 +1,19 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from "react";
+import LoginModal from "./components/LoginModal";
 
 function App() {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="h-screen flex items-center justify-center bg-gray-100">
+      <button
+        onClick={() => setIsOpen(true)}
+        className="px-6 py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition"
+      >
+        로그인하기
+      </button>
+
+      {isOpen && <LoginModal onClose={() => setIsOpen(false)} />}
     </div>
   );
 }
