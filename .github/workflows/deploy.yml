@@ -43,9 +43,13 @@ jobs:
           cd backend
           chmod +x gradlew
           ./gradlew clean build -x test
+
+          # ✅ 실제로 jar 파일이 존재하는지 확인
+          ls -al build/libs
+
+          # ✅ jar 파일명을 app.jar로 복사
           cp build/libs/*.jar ../app.jar
           echo "✅ Backend build complete!"
-
       # ✅ 4️⃣ EC2로 파일 전송
       - name: Upload files to EC2
         uses: appleboy/scp-action@master
