@@ -2,14 +2,15 @@ name: Deploy to EC2
 
 on:
   push:
-    branches: [ "main" ]  # main 브랜치에 push될 때 실행
+    branches: [ "main" ]  # main 브랜치 push 시 실행
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     env:
-      GITHUB_HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+      FRONT_KEY: '[front]'
+      BACK_KEY: '[back]'
 
     steps:
       # ✅ 1️⃣ 코드 체크아웃
@@ -18,80 +19,83 @@ jobs:
 
       # ✅ 2️⃣ 프론트엔드 빌드
       - name: Build frontend
-        if: contains(github.event.head_commit.message, '[front]')
+        if: contains(github.event.head_commit.message, env.FRONT_KEY)
         run: |
           echo "🧱 Building frontend..."
           cd frontend
           npm install
           npm run build
           tar -czf build.tar.gz build
-          mv build.tar.gz ../build.tar.gz
+          mv build.tar.gz $GITHUB_WORKSPACE/build.tar.gz
           echo "✅ Frontend build complete!"
 
-      # ✅ 3️⃣ 백엔드 빌드
+      # ✅ 3️⃣ 자바 세팅 (백엔드 빌드용)
       - name: Setup Java for backend
-        if: contains(github.event.head_commit.message, '[back]')
+        if: contains(github.event.head_commit.message, env.BACK_KEY)
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
 
+      # ✅ 4️⃣ 백엔드 빌드
       - name: Build backend
-        if: contains(github.event.head_commit.message, '[back]')
+        if: contains(github.event.head_commit.message, env.BACK_KEY)
         run: |
           echo "⚙️ Building backend..."
           cd backend
           chmod +x gradlew
           ./gradlew clean build -x test
-
-          # ✅ 실제로 jar 파일이 존재하는지 확인
+          echo "📦 Build output 확인:"
           ls -al build/libs
-
-          # ✅ jar 파일명을 app.jar로 복사
-          cp build/libs/*.jar ../app.jar
+          mkdir -p $GITHUB_WORKSPACE
+          cp build/libs/*.jar $GITHUB_WORKSPACE/app.jar
           echo "✅ Backend build complete!"
-      # ✅ 4️⃣ EC2로 파일 전송
+
+
+      # ✅ 5️⃣ EC2로 파일 전송 (커밋 키워드에 따라 분기)
       - name: Upload files to EC2
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.EC2_PUBLIC_IP }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "app.jar,build.tar.gz"
-          target: "/home/ubuntu"
           port: 22
+          source: |
+            ${{ contains(github.event.head_commit.message, env.FRONT_KEY) && 'build.tar.gz' || '' }}
+            ${{ contains(github.event.head_commit.message, env.BACK_KEY) && 'app.jar' || '' }}
+          target: "/home/ubuntu"
+        continue-on-error: false
 
-      # ✅ 5️⃣ EC2 내에서 배포 명령 실행
+      # ✅ 6️⃣ EC2 내부에서 배포 명령 실행
       - name: Run deployment commands on EC2
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_PUBLIC_IP }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: GITHUB_HEAD_COMMIT_MESSAGE
           script: |
             echo "🚀 Starting deployment process on EC2..."
-            echo "Commit message: ${GITHUB_HEAD_COMMIT_MESSAGE}"
-
-            if [[ "${GITHUB_HEAD_COMMIT_MESSAGE}" == *"[front]"* ]]; then
+            
+            if [[ "${{ github.event.head_commit.message }}" == *"[front]"* ]]; then
               echo "🧩 Frontend update detected."
               if [ -f "build.tar.gz" ]; then
                 sudo rm -rf /var/www/html/*
-                sudo tar -xzf build.tar.gz -C /var/www/html
+                sudo tar -xzf /home/ubuntu/build.tar.gz -C /var/www/html
                 echo "✅ Frontend updated successfully!"
               else
                 echo "⚠️ build.tar.gz not found, skipping frontend deploy."
               fi
             fi
 
-            if [[ "${GITHUB_HEAD_COMMIT_MESSAGE}" == *"[back]"* ]]; then
+            if [[ "${{ github.event.head_commit.message }}" == *"[back]"* ]]; then
               echo "🧩 Backend update detected."
-              if [ -f "app.jar" ]; then
+              if [ -f "/home/ubuntu/app.jar" ]; then
                 sudo systemctl stop spring || true
-                mv app.jar /home/ubuntu/backend/app.jar
+                mv /home/ubuntu/app.jar /home/ubuntu/backend/app.jar
                 sudo systemctl start spring
                 echo "✅ Backend restarted successfully!"
               else
                 echo "⚠️ app.jar not found, skipping backend deploy."
               fi
             fi
+
