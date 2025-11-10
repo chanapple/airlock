@@ -47,26 +47,35 @@ jobs:
           ./gradlew clean build -x test
           echo "📦 Build output 확인:"
           ls -al build/libs
-          mkdir -p $GITHUB_WORKSPACE
+          mkdir -p $GITHUB_WORKSPACE     # ✅ 루트 디렉토리 보장
           cp build/libs/*.jar $GITHUB_WORKSPACE/app.jar
           echo "✅ Backend build complete!"
 
-
-      # ✅ 5️⃣ EC2로 파일 전송 (커밋 키워드에 따라 분기)
-      - name: Upload files to EC2
+      # ✅ 5️⃣ EC2로 프론트엔드 빌드 파일 전송
+      - name: Upload frontend build to EC2
+        if: contains(github.event.head_commit.message, env.FRONT_KEY)
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.EC2_PUBLIC_IP }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
-          source: |
-            ${{ contains(github.event.head_commit.message, env.FRONT_KEY) && 'build.tar.gz' || '' }}
-            ${{ contains(github.event.head_commit.message, env.BACK_KEY) && 'app.jar' || '' }}
+          source: "build.tar.gz"
           target: "/home/ubuntu"
-        continue-on-error: false
 
-      # ✅ 6️⃣ EC2 내부에서 배포 명령 실행
+      # ✅ 6️⃣ EC2로 백엔드 JAR 파일 전송
+      - name: Upload backend jar to EC2
+        if: contains(github.event.head_commit.message, env.BACK_KEY)
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_PUBLIC_IP }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          source: "app.jar"
+          target: "/home/ubuntu"
+
+      # ✅ 7️⃣ EC2 내부에서 배포 명령 실행
       - name: Run deployment commands on EC2
         uses: appleboy/ssh-action@master
         with:
@@ -76,9 +85,10 @@ jobs:
           script: |
             echo "🚀 Starting deployment process on EC2..."
             
+            # 🧱 프론트엔드 배포
             if [[ "${{ github.event.head_commit.message }}" == *"[front]"* ]]; then
               echo "🧩 Frontend update detected."
-              if [ -f "build.tar.gz" ]; then
+              if [ -f "/home/ubuntu/build.tar.gz" ]; then
                 sudo rm -rf /var/www/html/*
                 sudo tar -xzf /home/ubuntu/build.tar.gz -C /var/www/html
                 echo "✅ Frontend updated successfully!"
@@ -87,15 +97,18 @@ jobs:
               fi
             fi
 
+            # ⚙️ 백엔드 배포
             if [[ "${{ github.event.head_commit.message }}" == *"[back]"* ]]; then
               echo "🧩 Backend update detected."
               if [ -f "/home/ubuntu/app.jar" ]; then
+                echo "🛑 Stopping existing Spring service (if any)..."
                 sudo systemctl stop spring || true
-                mv /home/ubuntu/app.jar /home/ubuntu/backend/app.jar
+                echo "🚚 Moving new JAR file..."
+                sudo mv /home/ubuntu/app.jar /home/ubuntu/backend/app.jar
+                echo "✅ Starting Spring service..."
                 sudo systemctl start spring
                 echo "✅ Backend restarted successfully!"
               else
                 echo "⚠️ app.jar not found, skipping backend deploy."
               fi
             fi
-
