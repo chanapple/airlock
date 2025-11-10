@@ -47,8 +47,11 @@ jobs:
           ./gradlew clean build -x test
           echo "📦 Build output 확인:"
           ls -al build/libs
-          mkdir -p $GITHUB_WORKSPACE     # ✅ 루트 디렉토리 보장
-          cp build/libs/*.jar $GITHUB_WORKSPACE/app.jar
+          echo "📍 현재 경로:"
+          pwd
+          echo "📁 상위 폴더 목록:"
+          ls -al ..
+          cp build/libs/*.jar ../app.jar
           echo "✅ Backend build complete!"
 
       # ✅ 5️⃣ EC2로 프론트엔드 빌드 파일 전송
