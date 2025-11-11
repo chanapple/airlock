@@ -2,7 +2,7 @@ name: Deploy to EC2
 
 on:
   push:
-    branches: [ "main" ]  # main 브랜치 push 시 실행
+    branches: [ "main" ]  # main 브랜치에 push 시 실행
 
 jobs:
   deploy:
@@ -47,13 +47,8 @@ jobs:
           ./gradlew clean build -x test
           echo "📦 Build output 확인:"
           ls -al build/libs
-          echo "📍 현재 경로:"
-          pwd
-          echo "📁 상위 폴더 목록:"
-          ls -al ..
           cp build/libs/*SNAPSHOT.jar ../app.jar
           echo "✅ Backend build complete!"
-
 
       # ✅ 5️⃣ EC2로 프론트엔드 빌드 파일 전송
       - name: Upload frontend build to EC2
@@ -88,13 +83,16 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             echo "🚀 Starting deployment process on EC2..."
-            
+
             # 🧱 프론트엔드 배포
             if [[ "${{ github.event.head_commit.message }}" == *"[front]"* ]]; then
               echo "🧩 Frontend update detected."
               if [ -f "/home/ubuntu/build.tar.gz" ]; then
                 sudo rm -rf /var/www/html/*
-                sudo tar -xzf /home/ubuntu/build.tar.gz -C /var/www/html
+                sudo tar -xzf /home/ubuntu/build.tar.gz -C /var/www/html --strip-components=1
+                sudo chown -R www-data:www-data /var/www/html
+                sudo chmod -R 755 /var/www/html
+                sudo systemctl restart nginx
                 echo "✅ Frontend updated successfully!"
               else
                 echo "⚠️ build.tar.gz not found, skipping frontend deploy."
@@ -105,11 +103,8 @@ jobs:
             if [[ "${{ github.event.head_commit.message }}" == *"[back]"* ]]; then
               echo "🧩 Backend update detected."
               if [ -f "/home/ubuntu/app.jar" ]; then
-                echo "🛑 Stopping existing Spring service (if any)..."
                 sudo systemctl stop spring || true
-                echo "🚚 Moving new JAR file..."
                 sudo mv /home/ubuntu/app.jar /home/ubuntu/backend/app.jar
-                echo "✅ Starting Spring service..."
                 sudo systemctl start spring
                 echo "✅ Backend restarted successfully!"
               else

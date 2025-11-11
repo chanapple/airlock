@@ -1,35 +1,28 @@
-import React, { useState } from "react";
-import LoginModal from "./components/modal/LoginModal";
-import RegisterModal from "./components/modal/RegisterModal";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import ChatRoom from "./components/chat/ChatRoom";
 
 function App() {
-  const [activeModal, setActiveModal] = useState(null); // "login" | "register" | null
+  const [hello, setHello] = useState("");
+
+  useEffect(() => {
+    axios
+      .get("/hello")
+      .then((response) => setHello(response.data))
+      .catch((error) => console.error("백엔드 연결 실패:", error));
+  }, []);
 
   return (
-    <div className="h-screen flex items-center justify-center bg-gray-100">
-      {/* 처음에 로그인 버튼 */}
-      <button
-        onClick={() => setActiveModal("login")}
-        className="px-6 py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition"
-      >
-        로그인하기
-      </button>
+    <div className="h-screen flex flex-col items-center justify-center bg-gray-100">
+      {/* Spring 연결 테스트 */}
+      <div className="mb-4 text-gray-700 font-semibold">
+        백엔드에서 가져온 데이터: {hello || "로딩 중..."}
+      </div>
 
-      {/* 로그인 모달 */}
-      {activeModal === "login" && (
-        <LoginModal
-          onClose={() => setActiveModal(null)}
-          onSwitchToRegister={() => setActiveModal("register")}
-        />
-      )}
-
-      {/* 회원가입 모달 */}
-      {activeModal === "register" && (
-        <RegisterModal
-          onClose={() => setActiveModal(null)}
-          onSwitchToLogin={() => setActiveModal("login")}
-        />
-      )}
+      {/* WebRTC 채팅 UI */}
+      <div className="w-full flex-1 flex items-center justify-center">
+        <ChatRoom />
+      </div>
     </div>
   );
 }
