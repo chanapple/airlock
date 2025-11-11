@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import ChatRoom from "./components/chat/ChatRoom";
+import ChatContainer from "./components/chat/ChatContainer";
 
 function App() {
   const [hello, setHello] = useState("");
@@ -21,7 +22,7 @@ function App() {
 
       {/* WebRTC 채팅 UI */}
       <div className="w-full flex-1 flex items-center justify-center">
-        <ChatRoom />
+         <ChatContainer />
       </div>
     </div>
   );

@@ -1,10 +1,7 @@
 module.exports = {
   style: {
     postcss: {
-      plugins: [
-        require("@tailwindcss/postcss"),
-        require("autoprefixer"),
-      ],
+      mode: "file", // 루트 postcss.config.js만 사용
     },
   },
 };
