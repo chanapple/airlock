@@ -1,30 +1,18 @@
-import React, { useState } from "react";
+import React from "react";
 
-export default function ChatInput({ onSend }) {
-  const [text, setText] = useState("");
-
-  const send = () => {
-    if (!text.trim()) return;
-    onSend(text);
-    setText("");
-  };
-
+function ChatInput() {
   return (
-    <div className="flex items-center p-3">
+    <div className="border-t flex items-center p-3 bg-white">
       <input
         type="text"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && send()}
         placeholder="메시지를 입력하세요"
-        className="flex-1 bg-gray-100 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-300"
+        className="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring focus:ring-[#DDE2B2]"
       />
-      <button
-        onClick={send}
-        className="ml-3 bg-[#FAE100] text-gray-900 px-4 py-2 rounded-full font-semibold hover:opacity-80"
-      >
+      <button className="ml-2 bg-[#DDE2B2] hover:bg-[#cdd59b] px-4 py-2 rounded-full font-semibold">
         전송
       </button>
     </div>
   );
 }
+
+export default ChatInput;

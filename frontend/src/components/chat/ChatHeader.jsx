@@ -1,10 +1,11 @@
 import React from "react";
 
-export default function ChatHeader() {
+function ChatHeader() {
   return (
-    <div className="bg-[#FAE100] text-gray-900 font-semibold py-4 px-5 flex items-center shadow-md">
-      <button className="mr-3 text-gray-800 hover:opacity-70">←</button>
-      <span>채팅방</span>
+    <div className="bg-[#F2F0E5] text-gray-800 font-semibold text-center py-3 border-b">
+      AirLock Chat
     </div>
   );
 }
+
+export default ChatHeader;
