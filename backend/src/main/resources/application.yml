@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: backend
+
+webrtc:
+  turn:
+    ip: 15.165.2.31
+    username: demo
+    password: Str0ngPass!
+    port: 3478
