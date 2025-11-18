@@ -4,7 +4,7 @@ spring:
 
 webrtc:
   turn:
-    ip: "TURN_SERVER_IP"
-    username: "TURN_USERNAME"
-    password: "TURN_PASSWORD"
+    ip: "15.165.2.31"
+    username: "demo"
+    password: "Str0ngPass!"
     port: 3478
