@@ -18,7 +18,7 @@ webrtc:
   turn:
     ip: "43.202.212.164"   # 새 Elastic IP 지정
     username: "demo"
-    password: "Str0ngPass!"
+    password: "Str0ngPass!" # test deploy
     port: 3478
 
 # FIDO / Passkey 설정
