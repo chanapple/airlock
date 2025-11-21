@@ -16,7 +16,7 @@ spring:
 # WebRTC TURN/STUN 서버 설정
 webrtc:
   turn:
-    ip: "43.202.212.164"   # 새 Elastic IP
+    ip: "43.202.212.164"   # 새 Elastic IP 지정
     username: "demo"
     password: "Str0ngPass!"
     port: 3478
