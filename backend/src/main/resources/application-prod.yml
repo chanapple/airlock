@@ -11,9 +11,17 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: false   # prod에서는 보통 false
+    show-sql: true
 
-# WebRTC TURN/STUN 서버 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    mappings:
+      enabled: true
+
 webrtc:
   turn:
     ip: "43.202.212.164"
@@ -21,7 +29,6 @@ webrtc:
     password: "Str0ngPass!"
     port: 3478
 
-# FIDO / Passkey 설정
 passkey:
   rpId: "43.202.212.164"
   origin: "http://43.202.212.164:3000/"
