@@ -8,11 +8,3 @@ webrtc:
     username: "demo"
     password: "Str0ngPass!"
     port: 3478
-
-#passkey:
-#  rpId: "43.202.212.164"
-#  origin: "http://43.202.212.164:3000"
-
-passkey:
-  rpId: localhost
-  origin: http://localhost:3000
